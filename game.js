@@ -197,7 +197,7 @@
     },
     {
       titulo: 'El vínculo', parte: 'Parte 2 · págs. 50 a 53',
-      intro: 'Ya pasaron casi dos meses. Cuidás a Luca, ordenás la casa, cosechás albahaca para la cocina y le avisás a Enzo si el chico <b>no hace la tarea o se duerme</b>.<br><br>Luca desconectó tu cargador: vas a tener que unir los cables.',
+      intro: 'Ya pasaron casi dos meses. Cuidás a Luca, ordenás la casa, cosechás albahaca para la cocina y le avisás a Enzo si el chico <b>no hace la tarea o se duerme</b>.<br><br>Luca se volvió a meter con tu cargador: puede que lo haya escondido o que solo te haya desconectado los cables.',
       battery: 80, plants: 2, basil: 2, toys: 3, lights: 0, reports: 2, hunts: true, nuria: false,
       quote: '"¿Qué está haciendo acá todo el día con nosotros?" — Enzo. El teléfono nunca suena.',
     },
@@ -243,7 +243,7 @@
   function audio() {
     if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
     if (actx && actx.state === 'suspended') actx.resume();
-    if (actx && !music.on) startMusic();
+    if (actx && !music.started) startBgm();
     return actx;
   }
 
@@ -269,7 +269,15 @@
     [[52, 56, 59], [[76, 1], [74, 1], [71, 1]]],
     [[57, 60, 64], [[69, 3]]],
   ];
-  const music = { on: false, out: null, next: 0, bar: 0, timer: null };
+  const music = { started: false, on: false, out: null, next: 0, bar: 0, timer: null, file: false };
+  // Si en la carpeta del juego hay un archivo "musica.mp3", suena ese (bajito y en loop).
+  const bgm = new Audio();
+  bgm.src = 'musica.mp3'; bgm.loop = true; bgm.volume = 0.22; bgm.preload = 'auto';
+  function startBgm() {
+    music.started = true;
+    bgm.muted = muted;
+    bgm.play().then(() => { music.file = true; }).catch(() => startMusic());
+  }
   function startMusic() {
     music.on = true;
     music.out = actx.createGain();
@@ -279,7 +287,7 @@
     music.next = actx.currentTime + 0.2;
     music.timer = setInterval(scheduleMusic, 150);
   }
-  function setMusicVolume() { if (music.out) music.out.gain.setTargetAtTime(muted ? 0 : MUSIC_VOL, actx.currentTime, 0.1); }
+  function setMusicVolume() { bgm.muted = muted; if (music.out) music.out.gain.setTargetAtTime(muted ? 0 : MUSIC_VOL, actx.currentTime, 0.1); }
   function pluck(freq, t, dur, type, vol) {
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
@@ -309,7 +317,8 @@
   }
   document.addEventListener('visibilitychange', () => {
     if (!actx) return;
-    if (document.hidden) actx.suspend(); else actx.resume();
+    if (document.hidden) { actx.suspend(); bgm.pause(); }
+    else { actx.resume(); if (music.file) bgm.play().catch(() => {}); }
   });
   function tone(freq, dur, type = 'sine', vol = 0.12, slide = 0, delay = 0) {
     const a = audio(); if (!a || muted) return;
@@ -383,9 +392,11 @@
     G.toys = shuffle(TOY_SPOTS).slice(0, d.toys).map(([x, y], i) => ({ ...C(x, y), kind: ['pelota', 'autito', 'dino'][i % 3], state: 'floor' }));
     G.switches = SWITCHES.map((s) => ({ ...s, ...C(s.t[0], s.t[1]), on: false }));
     shuffle(G.switches).slice(0, d.lights).forEach((s) => { s.on = true; });
-    if (d.chargerHidden) { const s = pick(CHARGER_SPOTS); G.cargador = { ...C(s.t[0], s.t[1]), state: 'floor', where: s.where }; }
+    // el día 1 y el 4 siempre lo esconde; los demás días a veces sí y a veces solo desconecta los cables
+    G.chargerHidden = d.chargerHidden || Math.random() < 0.5;
+    if (G.chargerHidden) { const s = pick(CHARGER_SPOTS); G.cargador = { ...C(s.t[0], s.t[1]), state: 'floor', where: s.where }; }
     else G.cargador = { ...PAD, state: 'atPad' }; // está en su lugar, pero con los cables desconectados
-    G.tasks = makeTasks(d);
+    G.tasks = makeTasks(d, G.chargerHidden);
 
     Object.assign(mister, { ...PAD, dir: -Math.PI / 2, kx: 0, ky: 0, battery: d.battery, carry: null, water: 0, hidden: false, trapped: null, bubble: null });
     if (d.startTrapped) lockIn('bano');
@@ -403,15 +414,15 @@
   function firstTip() {
     if (G.n === 1) toast(`Luca te encerró en el baño. Acercate a la puerta y forzá la cerradura con ${isTouch ? 'el botón <b>A</b>' : '<span class="key">Espacio</span>'}.`, 5);
     else if (G.d.nuria) toast('Hoy viene Nuria. Cuando aparezca el aviso, corré a esconderte bajo el sillón del living.', 4.5);
-    else if (G.d.chargerHidden) toast('Luca escondió el cargador. Cuando estés cerca lo vas a ver brillar.', 4);
+    else if (G.chargerHidden) toast(`Luca escondió el cargador ${G.cargador.where}. Buscalo y llevalo al living.`, 4.5);
     else toast('Luca desconectó el cargador. Andá al living y uní los cables.', 3.5);
   }
 
-  function makeTasks(d) {
+  function makeTasks(d, hidden) {
     const s = () => G.stats;
     const L = [];
     if (d.startTrapped) L.push({ text: () => 'Escapá del baño: forzá la cerradura', check: () => s().escaped > 0 });
-    L.push(d.chargerHidden
+    L.push(hidden
       ? { text: () => 'Encontrá el cargador que escondió Luca, llevalo al living y uní los cables', check: () => G.chargerActive }
       : { text: () => 'Luca desconectó el cargador: uní los cables en el living', check: () => G.chargerActive });
     if (d.plants) L.push({ text: () => `Regá las plantas del vivero (${Math.min(s().watered, d.plants)}/${d.plants}) — la regadera pierde agua`, check: () => s().watered >= d.plants });
@@ -438,7 +449,7 @@
     G.stats.escaped++;
     G.grabCd = 3;
     toast('¡Abriste la cerradura! Ahora alejate de Luca.', 3);
-    if (G.n === 1 && G.stats.escaped === 1) setTimeout(() => { if (G && mode === 'play') toast('Ahora buscá el cargador: Luca lo escondió. Cuando estés cerca lo vas a ver brillar.', 4.5); }, 3200);
+    if (G.n === 1 && G.stats.escaped === 1) setTimeout(() => { if (G && mode === 'play') toast(`Ahora buscá el cargador: Luca lo dejó ${G.cargador.where}.`, 4.5); }, 3200);
   }
   function grabMister() {
     lockIn('bano');
@@ -1523,9 +1534,7 @@
     for (const b of G.basil) drawBasil(ctx, b, t);
     for (const toy of G.toys) if (toy.state === 'floor') drawToy(ctx, toy);
     if (G.cargador.state === 'floor') {
-      const d = dist(mister, G.cargador);
-      const a = clamp(1.6 - d / (2.6 * T), 0, 1);
-      if (a > 0) drawCargador(ctx, G.cargador.x, G.cargador.y, t, a);
+      drawCargador(ctx, G.cargador.x, G.cargador.y, t, 1);
     }
     if (G.d.basil) {
       ctx.save(); ctx.font = '800 11px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#5c3d1e';

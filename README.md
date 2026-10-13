@@ -20,9 +20,14 @@ Trabajo de Guido Jacofsky, Zahir Fara, Lucas Park e Ignacio Britos.
 ## Minijuegos
 
 - **Cerradura (estilo GTA):** si Luca te agarra te encierra en el baño. Frená la ganzúa en la zona verde para abrir cada perno.
-- **Cables (estilo Among Us):** para que el cargador funcione hay que unir cada cable con el de su color.
+- **Cables (estilo Among Us):** para que el cargador funcione hay que unir cada cable con el de su color. Algunos días Luca además lo esconde y primero hay que encontrarlo.
 - **Riego:** mantené apretado para echar agua y soltá en la zona verde. La regadera pierde agua si te movés.
 - **Albahaca:** se corta en el vivero y hay que llevarla al cesto de la cocina antes de que se marchite.
+
+## Música
+
+Si en la carpeta del juego hay un archivo llamado `musica.mp3`, suena de fondo bajito y en loop.
+Si no está, suena una barcarola napolitana sintetizada. El botón 🔊 apaga todo el sonido.
 
 ## Controles
 
