@@ -173,3 +173,22 @@ body.touch #toast { bottom: auto; top: 40%; }
 
 #taskList li.more { color: var(--muted); font-size: 12px; padding-left: 0; }
 #taskList li.more::before { content: none; }
+
+/* ---------- Minijuegos ---------- */
+#mini {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 16px;
+  background: rgba(20, 12, 8, .55); touch-action: none;
+}
+.mini-card {
+  background: #1f2328; color: #fff; border-radius: 20px; padding: 14px;
+  width: min(380px, 100%); box-shadow: 0 16px 40px rgba(0,0,0,.5);
+}
+.mini-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.mini-head b { font-size: 18px; }
+#miniClose {
+  border: 0; border-radius: 10px; padding: 6px 12px; font-weight: 800; cursor: pointer;
+  background: #3a3f46; color: #fff;
+}
+#miniCanvas { display: block; width: 100%; aspect-ratio: 1; border-radius: 12px; background: #2b2f36; touch-action: none; cursor: pointer; }
+#miniHelp { margin: 10px 2px 0; font-size: 14px; line-height: 1.35; color: #d8dde3; text-align: center; }
+#miniHelp .key { background: #3a3f46; color: #fff; }
