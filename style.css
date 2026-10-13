@@ -192,3 +192,39 @@ body.touch #toast { bottom: auto; top: 40%; }
 #miniCanvas { display: block; width: 100%; aspect-ratio: 1; border-radius: 12px; background: #2b2f36; touch-action: none; cursor: pointer; }
 #miniHelp { margin: 10px 2px 0; font-size: 14px; line-height: 1.35; color: #d8dde3; text-align: center; }
 #miniHelp .key { background: #3a3f46; color: #fff; }
+
+/* ---------- Música (reproductor de YouTube escondido + mini reproductor) ---------- */
+#yt-musica-caja {
+  position: fixed; width: 200px; height: 200px; left: -9999px; top: 0;
+  opacity: 0; pointer-events: none;
+}
+.reproductor {
+  position: fixed; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 60;
+  width: min(300px, calc(100vw - 24px));
+  display: none; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 4px; border-radius: 999px;
+  background: rgba(251,243,234,.96); box-shadow: 0 6px 18px rgba(0,0,0,.3);
+}
+.reproductor.visible { display: flex; }
+.btn-musica {
+  flex: none; width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer;
+  color: #fff; background: var(--accent); display: grid; place-items: center;
+}
+.btn-musica svg { width: 20px; height: 20px; }
+.btn-musica .ico-off { display: none; }
+.btn-musica.muteado .ico-on { display: none; }
+.btn-musica.muteado .ico-off { display: block; }
+.btn-musica.llamando { animation: late 1s ease-in-out infinite; box-shadow: 0 0 0 4px #ffd166; }
+.rep-info { flex: 1; min-width: 0; line-height: 1.2; }
+.rep-titulo { overflow: hidden; white-space: nowrap; font-weight: 700; font-size: 13px; color: var(--ink); }
+.rep-titulo span { display: inline-block; }
+.rep-titulo.corre span { animation: desliza var(--tiempo, 8s) ease-in-out infinite alternate; }
+#volumen { flex: none; width: 70px; accent-color: var(--accent); cursor: pointer; }
+/* en el celu va arriba del botón A, para no tapar el joystick ni las tareas */
+body.touch .reproductor {
+  left: auto; right: 10px; width: 170px;
+  bottom: calc(150px + env(safe-area-inset-bottom));
+}
+body.touch #volumen { display: none; }
+@keyframes late { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes desliza { 0%, 15% { transform: translateX(0); } 85%, 100% { transform: translateX(calc(-1 * var(--corrimiento, 0px))); } }

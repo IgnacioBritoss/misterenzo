@@ -52,6 +52,20 @@
     <div id="card" class="card"></div>
   </div>
 
+  <!-- Música de fondo (reproductor de YouTube escondido) -->
+  <div id="yt-musica-caja" aria-hidden="true"><div id="yt-musica"></div></div>
+  <!-- Mini reproductor: pausa, canción que suena y volumen -->
+  <div id="reproductor" class="reproductor" aria-label="Música">
+    <button id="btnMusica" class="btn-musica" title="Pausar / seguir la música" aria-label="Pausar o seguir la música">
+      <svg class="ico-on" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" /><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+      <svg class="ico-off" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" /><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    </button>
+    <div class="rep-info">
+      <div id="repTitulo" class="rep-titulo"><span>Cargando…</span></div>
+    </div>
+    <input id="volumen" type="range" min="0" max="100" value="25" aria-label="Volumen" title="Volumen">
+  </div>
+
   <script src="game.js"></script>
 </body>
 </html>

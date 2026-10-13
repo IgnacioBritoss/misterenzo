@@ -243,7 +243,7 @@
   function audio() {
     if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } }
     if (actx && actx.state === 'suspended') actx.resume();
-    if (actx && !music.started) startBgm();
+    if (!music.started) startBgm();
     return actx;
   }
 
@@ -269,15 +269,98 @@
     [[52, 56, 59], [[76, 1], [74, 1], [71, 1]]],
     [[57, 60, 64], [[69, 3]]],
   ];
-  const music = { started: false, on: false, out: null, next: 0, bar: 0, timer: null, file: false };
-  // Si en la carpeta del juego hay un archivo "musica.mp3", suena ese (bajito y en loop).
-  const bgm = new Audio();
-  bgm.src = 'musica.mp3'; bgm.loop = true; bgm.volume = 0.22; bgm.preload = 'auto';
-  function startBgm() {
-    music.started = true;
-    bgm.muted = muted;
-    bgm.play().then(() => { music.file = true; }).catch(() => startMusic());
+  const music = { started: false, on: false, out: null, next: 0, bar: 0, timer: null };
+
+  // ---------- Música de YouTube (misma lógica que felizcumpleJuan) ----------
+  // Un reproductor de YouTube escondido y un mini reproductor con pausa, nombre de la canción y volumen.
+  // Si YouTube no responde (sin internet o video bloqueado), suena la barcarola sintetizada.
+  const CANCION = 'n9FMvfvkBro';
+  const yt = { player: null, ready: false, failed: false, paused: false, vol: store.get('mister.vol', 25) };
+  const ytOk = () => yt.player && typeof yt.player.playVideo === 'function' && !yt.failed;
+  window.onYouTubeIframeAPIReady = () => {
+    yt.player = new YT.Player('yt-musica', {
+      videoId: CANCION,
+      playerVars: { playsinline: 1, rel: 0, modestbranding: 1, controls: 0 },
+      events: {
+        onReady: () => { yt.ready = true; showSong(); if (music.started) startBgm(true); },
+        onStateChange: (e) => {
+          if (e.data === YT.PlayerState.ENDED) { yt.player.seekTo(0, true); yt.player.playVideo(); }
+          if (e.data === YT.PlayerState.PLAYING) $('btnMusica').classList.remove('llamando');
+          musicIcon();
+          showSong();
+        },
+        onError: () => ytFail(),
+      },
+    });
+  };
+  (() => {
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    s.onerror = () => ytFail();
+    document.head.appendChild(s);
+  })();
+  function ytFail() {
+    if (yt.failed) return;
+    yt.failed = true;
+    $('reproductor').classList.remove('visible');
+    if (music.started && !music.on && actx) startMusic();
   }
+  // se llama con el primer toque o clic (los navegadores no dejan arrancar sonido antes)
+  function startBgm(fromReady) {
+    if (!music.started) {
+      music.started = true;
+      setTimeout(() => { if (!yt.ready) ytFail(); }, 9000);
+    }
+    if (yt.failed) { if (!music.on && actx) startMusic(); return; }
+    if (!ytOk() || !yt.ready) return;
+    $('reproductor').classList.add('visible');
+    yt.player.setVolume(yt.vol);
+    if (!muted && !yt.paused) yt.player.playVideo();
+    // si el navegador no la dejó arrancar, el botón late para que lo toquen
+    setTimeout(() => {
+      const playing = yt.player.getPlayerState() === YT.PlayerState.PLAYING;
+      if (!playing && !muted && !yt.paused) $('btnMusica').classList.add('llamando');
+      musicIcon();
+    }, 2500);
+    if (fromReady) showSong();
+  }
+  function musicIcon() {
+    let playing = false;
+    try { playing = yt.player.getPlayerState() === YT.PlayerState.PLAYING; } catch (e) { /* todavía no cargó */ }
+    $('btnMusica').classList.toggle('muteado', !playing);
+  }
+  function showSong() {
+    let title = '';
+    try { title = yt.player.getVideoData().title || ''; } catch (e) { /* todavía no cargó */ }
+    const box = $('repTitulo'), span = box.querySelector('span');
+    const text = title || 'Cargando…';
+    if (span.textContent === text) return;
+    span.textContent = text;
+    box.classList.remove('corre');
+    requestAnimationFrame(() => {
+      const extra = span.scrollWidth - box.clientWidth;
+      if (extra > 4) {
+        box.style.setProperty('--corrimiento', `${extra}px`);
+        box.style.setProperty('--tiempo', `${Math.max(4, extra / 25)}s`);
+        box.classList.add('corre');
+      }
+    });
+  }
+  $('btnMusica').addEventListener('click', () => {
+    if (!ytOk()) return;
+    const playing = yt.player.getPlayerState() === YT.PlayerState.PLAYING;
+    if (playing) yt.player.pauseVideo(); else { yt.player.setVolume(yt.vol); yt.player.playVideo(); }
+    yt.paused = playing;
+    $('btnMusica').classList.remove('llamando');
+    musicIcon();
+  });
+  $('volumen').value = yt.vol;
+  $('volumen').addEventListener('input', (e) => {
+    yt.vol = +e.target.value;
+    store.set('mister.vol', yt.vol);
+    if (ytOk()) yt.player.setVolume(yt.vol);
+  });
+
   function startMusic() {
     music.on = true;
     music.out = actx.createGain();
@@ -287,7 +370,9 @@
     music.next = actx.currentTime + 0.2;
     music.timer = setInterval(scheduleMusic, 150);
   }
-  function setMusicVolume() { bgm.muted = muted; if (music.out) music.out.gain.setTargetAtTime(muted ? 0 : MUSIC_VOL, actx.currentTime, 0.1); }
+  function setMusicVolume() {
+    if (ytOk() && yt.ready) { if (muted) yt.player.pauseVideo(); else if (!yt.paused) yt.player.playVideo(); }
+    if (music.out) music.out.gain.setTargetAtTime(muted ? 0 : MUSIC_VOL, actx.currentTime, 0.1); }
   function pluck(freq, t, dur, type, vol) {
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
@@ -316,9 +401,11 @@
     }
   }
   document.addEventListener('visibilitychange', () => {
+    if (ytOk() && yt.ready && music.started) {
+      if (document.hidden) yt.player.pauseVideo(); else if (!muted && !yt.paused) yt.player.playVideo();
+    }
     if (!actx) return;
-    if (document.hidden) { actx.suspend(); bgm.pause(); }
-    else { actx.resume(); if (music.file) bgm.play().catch(() => {}); }
+    if (document.hidden) actx.suspend(); else actx.resume();
   });
   function tone(freq, dur, type = 'sine', vol = 0.12, slide = 0, delay = 0) {
     const a = audio(); if (!a || muted) return;

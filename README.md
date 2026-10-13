@@ -26,8 +26,10 @@ Trabajo de Guido Jacofsky, Zahir Fara, Lucas Park e Ignacio Britos.
 
 ## Música
 
-Si en la carpeta del juego hay un archivo llamado `musica.mp3`, suena de fondo bajito y en loop.
-Si no está, suena una barcarola napolitana sintetizada. El botón 🔊 apaga todo el sonido.
+Suena de fondo una canción de YouTube con un reproductor escondido (la misma lógica que en `felizcumpleJuan`).
+Abajo aparece un mini reproductor con pausa, el nombre de la canción y el volumen.
+Para cambiar la canción, editá `CANCION` en `game.js` con el código del video (lo que va después de `youtu.be/`).
+Si YouTube no carga, suena una barcarola napolitana sintetizada. El botón 🔊 apaga todo el sonido.
 
 ## Controles
 
