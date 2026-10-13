@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2a1a12">
+  <title>Míster, el topo</title>
+  <meta name="description" content="Juego 2D basado en Kentukis de Samanta Schweblin: sos Míster, el kentuki topo de Enzo.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" hidden>
+    <div class="topbar">
+      <div id="dayLabel" class="pill"></div>
+      <div class="battery" title="Batería">
+        <div id="batFill"></div>
+        <span id="batText"></span>
+      </div>
+      <div id="water" class="pill" title="Agua en la regadera"></div>
+      <button id="btnMute" class="icon" aria-label="Sonido">🔊</button>
+      <button id="btnPause" class="icon" aria-label="Pausa">❚❚</button>
+    </div>
+    <div id="tasks">
+      <button id="tasksToggle">Tareas ▾</button>
+      <ul id="taskList"></ul>
+    </div>
+    <div id="banner" hidden></div>
+    <div id="toast"></div>
+  </div>
+
+  <div id="touch" hidden>
+    <div id="stickZone">
+      <div id="stickBase"><div id="stickKnob"></div></div>
+    </div>
+    <button id="btnAction" aria-label="Acción">A</button>
+  </div>
+
+  <div id="overlay">
+    <div id="card" class="card"></div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

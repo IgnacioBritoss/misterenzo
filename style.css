@@ -1,0 +1,175 @@
+:root {
+  --bg: #2a1a12;
+  --card: #fbf3ea;
+  --ink: #3a2418;
+  --muted: #7a5a46;
+  --accent: #b5652e;
+  --accent-dark: #8a4a1f;
+  --ok: #3f9a45;
+  --bad: #c0392b;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+canvas#game { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; }
+
+[hidden] { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; }
+
+.topbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; gap: 8px; align-items: center;
+  padding: max(8px, env(safe-area-inset-top)) 10px 8px;
+  background: linear-gradient(rgba(42,26,18,.85), rgba(42,26,18,0));
+}
+
+.pill {
+  background: rgba(251,243,234,.95); color: var(--ink);
+  border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 14px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#dayLabel { flex: 0 1 auto; min-width: 0; }
+
+.battery {
+  position: relative; width: 110px; height: 26px; flex: 0 0 auto;
+  border: 3px solid #fbf3ea; border-radius: 7px; background: rgba(0,0,0,.35);
+  overflow: hidden;
+}
+.battery::after {
+  content: ""; position: absolute; right: -9px; top: 6px; width: 5px; height: 8px;
+  background: #fbf3ea; border-radius: 0 2px 2px 0;
+}
+#batFill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: var(--ok); transition: background .3s; }
+#batFill.low { background: var(--bad); animation: blink .6s steps(2) infinite; }
+#batFill.charging { background: #4fb3d9; }
+#batText { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 13px; text-shadow: 0 1px 2px #000; }
+@keyframes blink { 50% { opacity: .45; } }
+
+button.icon {
+  pointer-events: auto; margin-left: auto;
+  width: 38px; height: 38px; border-radius: 50%; border: 0;
+  background: rgba(251,243,234,.95); color: var(--ink); font-size: 16px; font-weight: 800; cursor: pointer;
+}
+#btnMute { margin-left: auto; }
+#btnPause { margin-left: 0; }
+
+#tasks {
+  position: absolute; top: calc(max(8px, env(safe-area-inset-top)) + 46px); left: 10px;
+  max-width: min(340px, 62vw);
+  background: rgba(251,243,234,.94); border-radius: 12px; padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.3); pointer-events: auto;
+}
+#tasksToggle {
+  border: 0; background: none; font-weight: 800; color: var(--accent-dark); font-size: 13px;
+  padding: 0; cursor: pointer; text-transform: uppercase; letter-spacing: .04em;
+}
+#taskList { list-style: none; margin: 6px 0 0; padding: 0; font-size: 14px; line-height: 1.3; }
+#taskList li { padding: 3px 0 3px 22px; position: relative; }
+#taskList li::before { content: "☐"; position: absolute; left: 0; top: 2px; color: var(--accent); font-weight: 900; }
+#taskList li.done { color: var(--muted); text-decoration: line-through; }
+#taskList li.done::before { content: "☑"; color: var(--ok); }
+#taskList li.final { font-weight: 800; color: var(--accent-dark); }
+#tasks.collapsed #taskList { display: none; }
+
+#banner {
+  position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--bad); color: #fff; font-weight: 900; font-size: clamp(18px, 4vw, 30px);
+  padding: 12px 22px; border-radius: 14px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  max-width: 92vw;
+}
+
+#toast {
+  position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+  background: rgba(42,26,18,.92); color: #fff; padding: 10px 16px; border-radius: 12px;
+  font-size: 15px; font-weight: 600; max-width: min(560px, 92vw); text-align: center;
+  opacity: 0; transition: opacity .25s;
+}
+#toast.show { opacity: 1; }
+body.touch #toast { bottom: auto; top: 40%; }
+
+/* ---------- Controles táctiles ---------- */
+#touch { position: fixed; inset: 0; pointer-events: none; }
+#stickZone { position: absolute; left: 0; bottom: 0; width: 55%; height: 55%; pointer-events: auto; }
+#stickBase {
+  position: absolute; left: 30px; bottom: calc(30px + env(safe-area-inset-bottom));
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(251,243,234,.18); border: 3px solid rgba(251,243,234,.5);
+}
+#stickKnob {
+  position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+  border-radius: 50%; background: rgba(251,243,234,.85);
+}
+#btnAction {
+  position: absolute; right: 28px; bottom: calc(44px + env(safe-area-inset-bottom));
+  width: 88px; height: 88px; border-radius: 50%; border: 0; pointer-events: auto;
+  background: var(--accent); color: #fff; font-size: 34px; font-weight: 900;
+  box-shadow: 0 6px 0 var(--accent-dark), 0 8px 18px rgba(0,0,0,.4);
+}
+#btnAction:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-dark); }
+
+/* ---------- Pantallas ---------- */
+#overlay {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(circle at 70% 40%, rgba(160,90,45,.85), rgba(42,26,18,.96) 70%);
+  overflow-y: auto; touch-action: pan-y;
+}
+.card {
+  background: var(--card); border-radius: 20px; padding: 24px 22px;
+  width: min(560px, 100%); box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  max-height: calc(100dvh - 32px); overflow-y: auto;
+}
+.card h1 { margin: 0; font-size: clamp(38px, 9vw, 56px); color: var(--accent-dark); letter-spacing: -.02em; }
+.card h2 { margin: 0 0 4px; font-size: 26px; color: var(--accent-dark); }
+.card .kicker { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; font-weight: 800; color: var(--accent); margin: 0 0 4px; }
+.card p { line-height: 1.45; margin: 10px 0; }
+.card .sub { color: var(--muted); margin-top: 4px; }
+.card ul { padding-left: 20px; line-height: 1.45; margin: 10px 0; }
+.card li { margin: 4px 0; }
+.card blockquote {
+  margin: 14px 0; padding: 10px 14px; border-left: 4px solid var(--accent);
+  background: #f3e3d3; border-radius: 0 10px 10px 0; font-style: italic;
+}
+.card .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 12px 0; }
+.card .stat { background: #f3e3d3; border-radius: 12px; padding: 8px; text-align: center; }
+.card .stat b { display: block; font-size: 24px; color: var(--accent-dark); }
+.card .stat span { font-size: 12px; color: var(--muted); }
+.card .credits { font-size: 12px; color: var(--muted); margin-top: 16px; text-align: center; }
+.card .hero { display: flex; justify-content: center; margin: 6px 0; }
+.card .days { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.card .days button { flex: 1 1 0; min-width: 48px; padding: 10px 0; }
+
+.btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.card button {
+  font: inherit; font-weight: 800; font-size: 16px; cursor: pointer;
+  border: 0; border-radius: 12px; padding: 12px 18px;
+  background: var(--accent); color: #fff; box-shadow: 0 4px 0 var(--accent-dark);
+}
+.card button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-dark); }
+.card button.ghost { background: #ead6c2; color: var(--ink); box-shadow: 0 4px 0 #c9ad93; }
+.btns button { flex: 1 1 auto; }
+.key { display: inline-block; background: #ead6c2; border-radius: 6px; padding: 0 6px; font-weight: 800; font-size: 13px; }
+
+@media (max-width: 520px) {
+  .pill { font-size: 12px; padding: 5px 9px; }
+  .battery { width: 78px; height: 24px; }
+  #taskList { font-size: 12px; }
+  #tasks { padding: 6px 8px; }
+  button.icon { width: 34px; height: 34px; font-size: 14px; }
+}
+
+#taskList li.more { color: var(--muted); font-size: 12px; padding-left: 0; }
+#taskList li.more::before { content: none; }
